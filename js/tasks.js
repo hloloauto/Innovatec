@@ -1,66 +1,52 @@
-/* ── UA Plataforma · tasks.js — Google Sheets backend ── */
+/* ── UA Plataforma · tasks.js — SheetBest backend ── */
 
 const Tasks = (() => {
 
-  const API = 'https://script.google.com/a/macros/autonoma.edu.pe/s/AKfycbzGn-IXe1til7ygl8yj0ATxwf-ft7523QJsB7d2o5tCA80oPPecSES5t7OCF0BXpF_S8w/exec';
+  const API = 'https://api.sheetbest.com/sheets/3e2abf06-1511-46b0-bd43-e72dd1f5088b';
 
   let userId = null;
-  let _cache = null; // memoria local para velocidad
+  let _cache = null;
 
   function init(uid) {
     userId = uid;
     _cache = null;
   }
 
-  /* ── Helpers de red ── */
-  async function get(params) {
-    const url = API + '?' + new URLSearchParams({ ...params, userId });
-    const res = await fetch(url);
-    return res.json();
-  }
-
-  async function post(body) {
-    const res = await fetch(API, {
-      method: 'POST',
-      body: JSON.stringify({ ...body, userId }),
-    });
-    return res.json();
-  }
-
-  /* ── Seed de tareas de ejemplo (solo primera vez) ── */
   async function maybeSeed() {
     const flagKey = `ua_seeded_${userId}`;
     if (localStorage.getItem(flagKey)) return;
     const today = new Date();
-    const fmt = d => d.toISOString().slice(0, 10);
-    const add = days => { const d = new Date(today); d.setDate(d.getDate() + days); return fmt(d); };
-
+    const add = days => { const d = new Date(today); d.setDate(d.getDate() + days); return d.toISOString().slice(0,10); };
     const seed = [
-      { nombre:'Entregar Informe Innova Tec',      curso:'Innovación Tecnológica', fecha:add(0),  estado:'Pendiente',   prioridad:'Alta',   notas:'Análisis de plataformas low-code. Incluir Glide, Google Sheets y comparativa.' },
-      { nombre:'Revisión de lecturas IA',           curso:'Inteligencia Artificial', fecha:add(-1), estado:'Completado', prioridad:'Media',  notas:'Capítulos 3 y 4 de Russell. Búsqueda heurística y lógica proposicional.' },
-      { nombre:'Proyecto Mejora Ágil Cafetalero',  curso:'Gestión de Proyectos',   fecha:add(5),  estado:'En progreso', prioridad:'Alta',   notas:'Sprint 2: validar flujo de registro de lotes.' },
-      { nombre:'Parcial de Estadística',            curso:'Estadística Aplicada',   fecha:add(-3), estado:'Vencido',     prioridad:'Crítica',notas:'Distribuciones, intervalos de confianza, regresión lineal.' },
-      { nombre:'Presentación de Bases de Datos',   curso:'Bases de Datos',         fecha:add(7),  estado:'Pendiente',   prioridad:'Media',  notas:'Modelo ER del sistema de biblioteca. Usar Draw.io.' },
-      { nombre:'Taller de Algoritmos',              curso:'Estructuras de Datos',   fecha:add(2),  estado:'En progreso', prioridad:'Media',  notas:'Implementar árbol AVL en Python.' },
+      { nombre:'Entregar Informe Innova Tec',    curso:'Innovación Tecnológica', fecha:add(0),  estado:'Pendiente',   prioridad:'Alta',    notas:'Análisis de plataformas low-code.' },
+      { nombre:'Revisión de lecturas IA',         curso:'Inteligencia Artificial',fecha:add(-1), estado:'Completado',  prioridad:'Media',   notas:'Capítulos 3 y 4 de Russell.' },
+      { nombre:'Proyecto Mejora Ágil Cafetalero', curso:'Gestión de Proyectos',  fecha:add(5),  estado:'En progreso', prioridad:'Alta',    notas:'Sprint 2: validar flujo de registro.' },
+      { nombre:'Parcial de Estadística',          curso:'Estadística Aplicada',  fecha:add(-3), estado:'Vencido',     prioridad:'Crítica', notas:'Distribuciones e intervalos de confianza.' },
+      { nombre:'Presentación Bases de Datos',     curso:'Bases de Datos',        fecha:add(7),  estado:'Pendiente',   prioridad:'Media',   notas:'Modelo ER con Draw.io.' },
+      { nombre:'Taller de Algoritmos',            curso:'Estructuras de Datos',  fecha:add(2),  estado:'En progreso', prioridad:'Media',   notas:'Árbol AVL en Python.' },
     ];
-
     for (const t of seed) {
-      t.id = 't' + Date.now() + Math.random().toString(36).slice(2, 6);
+      t.id = 't' + Date.now() + Math.random().toString(36).slice(2,5);
+      t.userId = userId;
       t.createdAt = new Date().toISOString();
-      await post({ action: 'saveTask', task: t });
+      await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(t)
+      });
+      await new Promise(r => setTimeout(r, 200));
     }
     localStorage.setItem(flagKey, '1');
   }
 
-  /* ── API pública ── */
-
   async function getAll() {
     if (_cache) return _cache;
     try {
-      const data = await get({ action: 'getTasks' });
+      const res  = await fetch(`${API}/search?userId=${encodeURIComponent(userId)}`);
+      const data = await res.json();
       _cache = Array.isArray(data) ? data : [];
     } catch(e) {
-      console.error('Sheets error:', e);
+      console.error('SheetBest error:', e);
       _cache = [];
     }
     return _cache;
@@ -69,11 +55,16 @@ const Tasks = (() => {
   async function add(data) {
     const task = {
       id: 't' + Date.now(),
-      ...data,
+      userId,
       createdAt: new Date().toISOString(),
+      ...data,
     };
-    await post({ action: 'saveTask', task });
-    _cache = null; // invalidar cache
+    _cache = null;
+    await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(task)
+    });
     return task;
   }
 
@@ -82,28 +73,30 @@ const Tasks = (() => {
     const existing = tasks.find(t => t.id === id);
     if (!existing) return null;
     const updated = { ...existing, ...data, updatedAt: new Date().toISOString() };
-    await post({ action: 'updateTask', task: updated });
     _cache = null;
+    await fetch(`${API}/id/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated)
+    });
     return updated;
   }
 
   async function remove(id) {
-    await post({ action: 'deleteTask', id });
     _cache = null;
+    await fetch(`${API}/id/${encodeURIComponent(id)}`, { method: 'DELETE' });
   }
 
   async function toggleDone(id) {
     const tasks = await getAll();
     const t = tasks.find(t => t.id === id);
     if (!t) return;
-    const newEstado = t.estado === 'Completado' ? 'Pendiente' : 'Completado';
-    await update(id, { estado: newEstado });
-    return { ...t, estado: newEstado };
+    await update(id, { estado: t.estado === 'Completado' ? 'Pendiente' : 'Completado' });
   }
 
   async function getStats() {
     const tasks = await getAll();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toISOString().slice(0,10);
     const total      = tasks.length;
     const completado = tasks.filter(t => t.estado === 'Completado').length;
     const pendiente  = tasks.filter(t => t.estado === 'Pendiente').length;
@@ -116,10 +109,9 @@ const Tasks = (() => {
 
   async function getUpcoming(limit = 5) {
     const tasks = await getAll();
-    const today = new Date().toISOString().slice(0, 10);
     return tasks
       .filter(t => t.estado !== 'Completado')
-      .sort((a, b) => a.fecha.localeCompare(b.fecha))
+      .sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''))
       .slice(0, limit);
   }
 
