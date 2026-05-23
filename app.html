@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UA Plataforma — Dashboard</title>
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ══════════════════════════════════
+       SIDEBAR
+  ══════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-mark">U</div>
+        UA Plataforma
+      </div>
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sb-avatar">🎓</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sb-name">Cargando…</div>
+          <div class="sidebar-user-role" id="sb-career">Estudiante</div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Navegación principal">
+      <span class="nav-section-label">Principal</span>
+
+      <button class="nav-item active" data-view="dashboard" onclick="Dashboard.showView('dashboard')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/>
+          <rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/>
+        </svg>
+        Dashboard
+      </button>
+
+      <button class="nav-item" data-view="tasks" onclick="Dashboard.showView('tasks')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <polyline points="3,8 6,11 13,4"/>
+          <rect x="1" y="1" width="14" height="14" rx="2"/>
+        </svg>
+        Mis Tareas
+        <span class="nav-badge" id="nav-badge-venc" style="display:none;">0</span>
+      </button>
+
+      <button class="nav-item" data-view="ai" onclick="Dashboard.showView('ai'); Dashboard.populateAISelect();">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2"/>
+          <line x1="8" y1="2" x2="8" y2="4"/><line x1="8" y1="12" x2="8" y2="14"/>
+          <line x1="2" y1="8" x2="4" y2="8"/><line x1="12" y1="8" x2="14" y2="8"/>
+        </svg>
+        Asistente IA
+      </button>
+
+      <span class="nav-section-label">Análisis</span>
+
+      <button class="nav-item" data-view="metrics" onclick="Dashboard.showView('metrics')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <polyline points="1,13 5,7 8,10 11,5 15,3"/>
+          <line x1="1" y1="15" x2="15" y2="15"/>
+        </svg>
+        Métricas y Pruebas
+      </button>
+
+      <span class="nav-section-label">Cuenta</span>
+
+      <button class="nav-item" data-view="profile" onclick="Dashboard.showView('profile')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
+        </svg>
+        Mi Perfil
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="nav-item" onclick="Auth.logout()" style="color:rgba(247,244,239,.4);">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3"/>
+          <polyline points="11,11 14,8 11,5"/><line x1="14" y1="8" x2="6" y2="8"/>
+        </svg>
+        Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <!-- ══════════════════════════════════
+       TOPBAR
+  ══════════════════════════════════ -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 class="page-title" id="page-title">Dashboard</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="search-bar" id="global-search-bar" style="display:none;">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <circle cx="7" cy="7" r="4"/><line x1="10.5" y1="10.5" x2="14" y2="14"/>
+        </svg>
+        <input type="text" placeholder="Buscar tareas…" id="task-search" oninput="Dashboard.renderTasks()" aria-label="Buscar tareas" />
+      </div>
+      <button class="btn btn-indigo btn-sm" id="btn-new-task" style="display:none;" onclick="Dashboard.openModal()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/>
+        </svg>
+        Nueva tarea
+      </button>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════
+       MAIN CONTENT
+  ══════════════════════════════════ -->
+  <main class="main-content">
+
+    <!-- ─── DASHBOARD VIEW ─── -->
+    <section class="view active" id="view-dashboard" aria-label="Dashboard">
+
+      <div class="greeting">
+        <p class="greeting-label" id="greeting-time">Buenos días</p>
+        <h2 class="greeting-title">Hola, <em id="greeting-name">estudiante</em> 👋</h2>
+      </div>
+
+      <!-- Metric cards -->
+      <div class="metrics-grid">
+        <div class="metric-card anim-fade-up" style="animation-delay:.05s">
+          <div class="metric-icon indigo">
+            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <rect x="2" y="2" width="14" height="14" rx="2"/>
+              <line x1="5" y1="9" x2="13" y2="9"/><line x1="5" y1="6" x2="13" y2="6"/><line x1="5" y1="12" x2="10" y2="12"/>
+            </svg>
+          </div>
+          <div class="metric-value" id="m-total">0</div>
+          <div class="metric-label">Tareas totales</div>
+          <div class="metric-trend" id="m-cursos">— cursos</div>
+        </div>
+
+        <div class="metric-card anim-fade-up" style="animation-delay:.1s">
+          <div class="metric-icon sage">
+            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <polyline points="3,9 7,13 15,5"/>
+            </svg>
+          </div>
+          <div class="metric-value" id="m-done">0</div>
+          <div class="metric-label">Completadas</div>
+          <div class="metric-trend">
+            <!-- Progress ring -->
+            <svg width="48" height="48" style="margin-top:4px;" aria-label="Porcentaje completado">
+              <circle cx="24" cy="24" r="20" fill="none" stroke="#EDE9E1" stroke-width="4"/>
+              <circle id="pct-ring" cx="24" cy="24" r="20" fill="none" stroke="#3A7D5E" stroke-width="4"
+                stroke-linecap="round" transform="rotate(-90 24 24)"
+                style="transition:stroke-dashoffset .6s cubic-bezier(.16,1,.3,1)"/>
+              <text x="24" y="28" text-anchor="middle" font-size="10" font-family="DM Sans,sans-serif"
+                fill="#3A7D5E" font-weight="600" id="pct-label">0%</text>
+            </svg>
+          </div>
+        </div>
+
+        <div class="metric-card anim-fade-up" style="animation-delay:.15s">
+          <div class="metric-icon amber">
+            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <circle cx="9" cy="9" r="7"/>
+              <line x1="9" y1="5" x2="9" y2="9.5"/><circle cx="9" cy="12.5" r=".5" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="metric-value" id="m-pend">0</div>
+          <div class="metric-label">Pendientes / En progreso</div>
+          <div class="metric-trend">Requieren atención</div>
+        </div>
+
+        <div class="metric-card anim-fade-up" style="animation-delay:.2s">
+          <div class="metric-icon rose">
+            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <path d="M9 2L2 16h14L9 2z"/><line x1="9" y1="8" x2="9" y2="11"/><circle cx="9" cy="13.5" r=".5" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="metric-value" id="m-venc">0</div>
+          <div class="metric-label">Vencidas</div>
+          <div class="metric-trend" style="color:var(--rose);">Acción inmediata</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-card-title">Distribución por estado</div>
+          <div class="chart-card-sub">Resumen visual de tus tareas</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:12px;">
+            <div style="position:relative;height:160px;">
+              <canvas id="chart-donut" role="img" aria-label="Gráfica de distribución de tareas por estado"></canvas>
+            </div>
+            <div class="chart-legend" style="flex-direction:column;gap:8px;">
+              <div class="legend-item"><span class="legend-dot" style="background:#3A7D5E;"></span>Completado</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#C47B1A;"></span>Pendiente</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#C0394A;"></span>Vencido</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#3D3BE8;"></span>En progreso</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-card-title">Tareas por curso</div>
+          <div class="chart-card-sub">Pendientes vs completadas</div>
+          <div style="position:relative;height:180px;">
+            <canvas id="chart-bar" role="img" aria-label="Barras de tareas por curso"></canvas>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item"><span class="legend-dot" style="background:#C47B1A;"></span>Pendientes</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#3A7D5E;"></span>Completadas</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upcoming tasks -->
+      <div class="upcoming-card">
+        <div class="upcoming-header">
+          <span class="upcoming-title">Próximas tareas</span>
+          <button class="btn btn-ghost btn-sm" onclick="Dashboard.showView('tasks')">Ver todas →</button>
+        </div>
+        <div id="upcoming-list">
+          <div style="padding:20px;text-align:center;font-size:13px;color:var(--ink-40);">Cargando…</div>
+        </div>
+      </div>
+
+      <!-- KPIs bar -->
+      <div class="card" style="padding:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:0;text-align:center;">
+        <div style="padding:0 16px;border-right:1px solid var(--cream-border);">
+          <div style="font-size:22px;font-weight:600;color:var(--sage);font-family:var(--font-display);">&lt; 2s</div>
+          <div style="font-size:11px;color:var(--ink-40);margin-top:2px;">Tiempo de respuesta</div>
+        </div>
+        <div style="padding:0 16px;border-right:1px solid var(--cream-border);">
+          <div style="font-size:22px;font-weight:600;color:var(--indigo);font-family:var(--font-display);">100%</div>
+          <div style="font-size:11px;color:var(--ink-40);margin-top:2px;">Exactitud de datos</div>
+        </div>
+        <div style="padding:0 16px;">
+          <div style="font-size:22px;font-weight:600;color:var(--amber);font-family:var(--font-display);">IA</div>
+          <div style="font-size:11px;color:var(--ink-40);margin-top:2px;">Asistente integrado</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── TASKS VIEW ─── -->
+    <section class="view" id="view-tasks" aria-label="Mis Tareas">
+
+      <div class="tasks-toolbar">
+        <div class="filter-group" role="group" aria-label="Filtrar por estado">
+          <button class="filter-chip active" data-filter="todos" onclick="setFilter(this)">Todas</button>
+          <button class="filter-chip" data-filter="pendiente" onclick="setFilter(this)">Pendientes</button>
+          <button class="filter-chip" data-filter="progreso" onclick="setFilter(this)">En progreso</button>
+          <button class="filter-chip" data-filter="completado" onclick="setFilter(this)">Completadas</button>
+          <button class="filter-chip" data-filter="vencido" onclick="setFilter(this)">Vencidas</button>
+        </div>
+      </div>
+
+      <div class="tasks-grid" id="tasks-grid" aria-live="polite">
+        <div style="padding:40px;text-align:center;color:var(--ink-40);">Cargando tareas…</div>
+      </div>
+
+      <!-- FAB new task -->
+      <button onclick="Dashboard.openModal()" aria-label="Agregar nueva tarea"
+        style="position:fixed;bottom:28px;right:28px;width:52px;height:52px;border-radius:50%;
+               background:var(--indigo);color:white;border:none;cursor:pointer;
+               box-shadow:0 4px 20px rgba(61,59,232,.4);font-size:24px;
+               display:flex;align-items:center;justify-content:center;z-index:50;
+               transition:transform .2s,box-shadow .2s;"
+        onmouseenter="this.style.transform='scale(1.1)';this.style.boxShadow='0 6px 28px rgba(61,59,232,.5)'"
+        onmouseleave="this.style.transform='';this.style.boxShadow='0 4px 20px rgba(61,59,232,.4)'">
+        +
+      </button>
+    </section>
+
+    <!-- ─── AI VIEW ─── -->
+    <section class="view" id="view-ai" aria-label="Asistente IA">
+      <div class="ai-view-layout">
+
+        <!-- Chat -->
+        <div class="ai-chat-area">
+          <div class="ai-chat-messages" id="ai-messages" aria-live="polite" aria-label="Mensajes del asistente">
+            <div class="ai-msg bot">
+              <div class="ai-msg-avatar">🤖</div>
+              <div class="ai-msg-bubble">
+                ¡Hola! Soy tu asistente académico. Puedo ayudarte a analizar tus tareas, darte tips de estudio, revisar tu carga académica y más. ¿En qué te ayudo hoy?
+              </div>
+            </div>
+          </div>
+          <div class="ai-chat-input-area">
+            <textarea id="ai-input" placeholder="Escribe tu pregunta… (Enter para enviar)" rows="1"
+              aria-label="Escribe tu mensaje"></textarea>
+            <button class="btn btn-indigo" onclick="Dashboard.sendAI()" aria-label="Enviar mensaje">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <line x1="14" y1="2" x2="7" y2="9"/><polygon points="14,2 9,14 7,9 2,7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick actions -->
+        <div>
+          <div class="ai-quick-panel">
+            <div class="ai-quick-header">Acciones rápidas</div>
+
+            <div style="padding:14px 18px;border-bottom:1px solid var(--cream-border);">
+              <label style="font-size:11px;font-weight:600;color:var(--ink-40);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Seleccionar tarea</label>
+              <select id="ai-task-select" style="width:100%;font-size:13px;"></select>
+            </div>
+
+            <button class="ai-quick-btn" onclick="Dashboard.quickAI('resumen')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                <rect x="2" y="2" width="12" height="12" rx="2"/>
+                <line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="9" x2="9" y2="9"/>
+              </svg>
+              <div>
+                <span class="ai-quick-label">Resumir tarea</span>
+                <span class="ai-quick-desc">Plan de acción en 3 oraciones</span>
+              </div>
+            </button>
+
+            <button class="ai-quick-btn" onclick="Dashboard.quickAI('tips')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                <circle cx="8" cy="6" r="4"/><line x1="8" y1="10" x2="8" y2="14"/>
+                <line x1="6" y1="14" x2="10" y2="14"/>
+              </svg>
+              <div>
+                <span class="ai-quick-label">Tips de estudio</span>
+                <span class="ai-quick-desc">3 consejos concretos y accionables</span>
+              </div>
+            </button>
+
+            <button class="ai-quick-btn" onclick="Dashboard.quickAI('carga')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                <polyline points="1,13 5,7 8,10 11,5 15,3"/><line x1="1" y1="15" x2="15" y2="15"/>
+              </svg>
+              <div>
+                <span class="ai-quick-label">Analizar mi carga</span>
+                <span class="ai-quick-desc">Prioridades y recomendaciones</span>
+              </div>
+            </button>
+
+            <button class="ai-quick-btn" onclick="Dashboard.quickAI('vencidas')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                <path d="M8 2L2 14h12L8 2z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12.5" r=".5" fill="currentColor"/>
+              </svg>
+              <div>
+                <span class="ai-quick-label">Gestionar vencidas</span>
+                <span class="ai-quick-desc">Cómo recuperar tareas atrasadas</span>
+              </div>
+            </button>
+          </div>
+
+          <div class="card" style="padding:16px;margin-top:14px;">
+            <div style="font-size:12px;font-weight:600;color:var(--ink-40);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em;">
+              Preguntas de ejemplo
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <button class="btn btn-ghost btn-sm" style="justify-content:flex-start;text-align:left;font-size:12px;"
+                onclick="document.getElementById('ai-input').value='¿Qué tareas debo priorizar esta semana?';Dashboard.sendAI()">
+                ¿Qué priorizar esta semana?
+              </button>
+              <button class="btn btn-ghost btn-sm" style="justify-content:flex-start;text-align:left;font-size:12px;"
+                onclick="document.getElementById('ai-input').value='¿Cuánto tiempo necesito para completar mis tareas pendientes?';Dashboard.sendAI()">
+                ¿Cuánto tiempo necesito?
+              </button>
+              <button class="btn btn-ghost btn-sm" style="justify-content:flex-start;text-align:left;font-size:12px;"
+                onclick="document.getElementById('ai-input').value='Dame un plan de estudio para esta semana';Dashboard.sendAI()">
+                Plan de estudio semanal
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── METRICS VIEW ─── -->
+    <section class="view" id="view-metrics" aria-label="Métricas y Pruebas">
+
+      <!-- KPI cards -->
+      <div class="metrics-full-grid">
+        <div class="metric-card">
+          <div class="metric-icon indigo">
+            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <rect x="2" y="2" width="14" height="14" rx="2"/>
+              <line x1="5" y1="9" x2="13" y2="9"/><line x1="5" y1="6" x2="13" y2="6"/><line x1="5" y1="12" x2="10" y2="12"/>
+            </svg>
+          </div>
+          <div class="metric-value" id="mt-total">0</div>
+          <div class="metric-label">Tareas registradas</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon sage">
+            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <polyline points="3,9 7,13 15,5"/>
+            </svg>
+          </div>
+          <div class="metric-value" id="mt-done">0</div>
+          <div class="metric-label">Completadas</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon indigo">
+            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <circle cx="9" cy="9" r="7"/><polyline points="9,5 9,9 12,11"/>
+            </svg>
+          </div>
+          <div class="metric-value metric-good" id="mt-pct">0%</div>
+          <div class="metric-label">Tasa de completitud</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon rose">
+            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <path d="M9 2L2 16h14L9 2z"/>
+              <line x1="9" y1="8" x2="9" y2="11"/><circle cx="9" cy="13.5" r=".5" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="metric-value" id="mt-venc">0</div>
+          <div class="metric-label">Tareas vencidas</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon sage">
+            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <polyline points="2,14 6,8 9,11 12,6 16,4"/>
+            </svg>
+          </div>
+          <div class="metric-value" style="color:var(--sage);">&lt;2s</div>
+          <div class="metric-label">Tiempo de respuesta</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon sage">
+            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <polyline points="3,9 7,13 15,5"/>
+            </svg>
+          </div>
+          <div class="metric-value" style="color:var(--sage);">100%</div>
+          <div class="metric-label">Exactitud de datos</div>
+        </div>
+      </div>
+
+      <div class="metrics-chart-row">
+        <!-- Impact radar -->
+        <div class="chart-card">
+          <div class="chart-card-title">Evaluación de impacto del prototipo</div>
+          <div class="chart-card-sub">Estado actual vs objetivo — radar de indicadores clave</div>
+          <div style="position:relative;height:280px;">
+            <canvas id="chart-impact" role="img" aria-label="Gráfica radar de indicadores de impacto"></canvas>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item"><span class="legend-dot" style="background:#3D3BE8;"></span>Estado actual</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#3A7D5E;"></span>Objetivo</div>
+          </div>
+        </div>
+
+        <!-- Fortalezas / debilidades -->
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="card" style="padding:18px;border-left:3px solid var(--sage);border-radius:0 var(--r-lg) var(--r-lg) 0;">
+            <div style="font-size:12px;font-weight:600;color:var(--sage);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">✓ Fortaleza</div>
+            <div style="font-size:13px;color:var(--ink-60);line-height:1.6;">Sistema rápido (&lt;2s) con 100% de exactitud en visualización. Interfaz intuitiva sin necesidad de capacitación.</div>
+          </div>
+          <div class="card" style="padding:18px;border-left:3px solid var(--sage);border-radius:0 var(--r-lg) var(--r-lg) 0;">
+            <div style="font-size:12px;font-weight:600;color:var(--sage);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">✓ Fortaleza</div>
+            <div style="font-size:13px;color:var(--ink-60);line-height:1.6;">Asistente IA integrado que analiza la carga académica y genera planes de acción personalizados.</div>
+          </div>
+          <div class="card" style="padding:18px;border-left:3px solid var(--rose);border-radius:0 var(--r-lg) var(--r-lg) 0;">
+            <div style="font-size:12px;font-weight:600;color:var(--rose);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">⚠ Debilidad</div>
+            <div style="font-size:13px;color:var(--ink-60);line-height:1.6;">Sin notificaciones push. Si el estudiante no abre la app, no sabe que una tarea está por vencer.</div>
+          </div>
+          <div class="card" style="padding:18px;border-left:3px solid var(--amber);border-radius:0 var(--r-lg) var(--r-lg) 0;">
+            <div style="font-size:12px;font-weight:600;color:var(--amber);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">→ Mejora propuesta</div>
+            <div style="font-size:13px;color:var(--ink-60);line-height:1.6;">Agregar sistema de alarmas y filtros de urgencia para ordenar tareas por prioridad crítica.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Test log table -->
+      <div class="chart-card" style="padding:0;overflow:hidden;">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--cream-border);display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div class="chart-card-title">Registro de pruebas funcionales</div>
+            <div class="chart-card-sub" style="margin:0;">6 casos de prueba — 0 errores detectados</div>
+          </div>
+          <span class="badge badge-completado">✓ Todas OK</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="test-log-table" aria-label="Tabla de pruebas funcionales">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Caso de prueba</th>
+                <th>Tiempo de respuesta</th>
+                <th>Errores</th>
+                <th>Usabilidad</th>
+                <th>Resultado</th>
+              </tr>
+            </thead>
+            <tbody id="logs-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── PROFILE VIEW ─── -->
+    <section class="view" id="view-profile" aria-label="Mi Perfil">
+      <div class="profile-layout">
+
+        <!-- Profile card -->
+        <div>
+          <div class="profile-card">
+            <div class="profile-avatar-big" id="profile-avatar">🎓</div>
+            <div class="profile-name" id="profile-name">Nombre</div>
+            <div class="profile-email" id="profile-career">Carrera</div>
+            <div class="profile-stat-row">
+              <div class="profile-stat">
+                <div class="profile-stat-val" id="profile-stat-total">0</div>
+                <div class="profile-stat-lbl">Tareas</div>
+              </div>
+              <div class="profile-stat">
+                <div class="profile-stat-val" id="profile-stat-done">0</div>
+                <div class="profile-stat-lbl">Hechas</div>
+              </div>
+              <div class="profile-stat">
+                <div class="profile-stat-val" id="profile-stat-pct">0%</div>
+                <div class="profile-stat-lbl">Avance</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:14px;padding:18px;">
+            <div style="font-size:12px;font-weight:600;color:var(--ink-40);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em;">Acciones</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="Dashboard.showView('tasks');Dashboard.openModal()">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/>
+                </svg>
+                Nueva tarea
+              </button>
+              <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="Dashboard.showView('ai')">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                  <circle cx="7" cy="7" r="5"/>
+                </svg>
+                Hablar con IA
+              </button>
+              <button class="btn btn-ghost" style="justify-content:flex-start;color:var(--rose);" onclick="Auth.logout()">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                  <path d="M5 2H3a1 1 0 00-1 1v8a1 1 0 001 1h2"/>
+                  <polyline points="10,10 13,7 10,4"/><line x1="13" y1="7" x2="5" y2="7"/>
+                </svg>
+                Cerrar sesión
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="chart-card" style="padding:22px;">
+            <div class="chart-card-title" style="margin-bottom:16px;">Información académica</div>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div class="field">
+                <label>Nombre completo</label>
+                <input type="text" id="edit-name" placeholder="Tu nombre completo" />
+              </div>
+              <div class="field">
+                <label>Carrera</label>
+                <input type="text" id="edit-career" placeholder="Ej: Ingeniería de Sistemas" />
+              </div>
+              <div class="field">
+                <label>Avatar</label>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;" id="edit-avatar-row">
+                  <div class="avatar-opt selected" data-em="🎓" onclick="pickAvatar(this)">🎓</div>
+                  <div class="avatar-opt" data-em="📚" onclick="pickAvatar(this)">📚</div>
+                  <div class="avatar-opt" data-em="💻" onclick="pickAvatar(this)">💻</div>
+                  <div class="avatar-opt" data-em="🔬" onclick="pickAvatar(this)">🔬</div>
+                  <div class="avatar-opt" data-em="🎨" onclick="pickAvatar(this)">🎨</div>
+                  <div class="avatar-opt" data-em="⚡" onclick="pickAvatar(this)">⚡</div>
+                </div>
+              </div>
+              <button class="btn btn-indigo" style="align-self:flex-start;" onclick="saveProfile()">
+                Guardar cambios
+              </button>
+            </div>
+          </div>
+
+          <!-- About the app -->
+          <div class="chart-card" style="padding:22px;">
+            <div class="chart-card-title" style="margin-bottom:12px;">Sobre UA Plataforma</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px solid var(--cream-border);">
+                <span style="color:var(--ink-60);">Versión</span><span>1.0.0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px solid var(--cream-border);">
+                <span style="color:var(--ink-60);">Tiempo de respuesta</span><span style="color:var(--sage);">&lt; 2s</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px solid var(--cream-border);">
+                <span style="color:var(--ink-60);">Exactitud de datos</span><span style="color:var(--sage);">100%</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;padding:8px 0;">
+                <span style="color:var(--ink-60);">Almacenamiento</span><span>Local (navegador)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ══════════════════════════════════
+     TASK MODAL
+══════════════════════════════════ -->
+<div class="modal-overlay" id="task-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"
+  onclick="if(event.target===this) Dashboard.closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-title">Nueva tarea</h2>
+      <button class="btn btn-ghost btn-sm" onclick="Dashboard.closeModal()" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="f-nombre">Nombre de la tarea *</label>
+        <input type="text" id="f-nombre" placeholder="Ej: Entregar Informe Innova Tec" />
+      </div>
+      <div class="field">
+        <label for="f-curso">Curso</label>
+        <input type="text" id="f-curso" placeholder="Ej: Innovación Tecnológica" />
+      </div>
+      <div class="form-row-2">
+        <div class="field">
+          <label for="f-fecha">Fecha límite</label>
+          <input type="date" id="f-fecha" />
+        </div>
+        <div class="field">
+          <label for="f-estado">Estado</label>
+          <select id="f-estado">
+            <option>Pendiente</option>
+            <option>En progreso</option>
+            <option>Completado</option>
+            <option>Vencido</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-prioridad">Prioridad</label>
+        <select id="f-prioridad">
+          <option>Baja</option>
+          <option selected>Media</option>
+          <option>Alta</option>
+          <option>Crítica</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="f-notas">Apuntes / notas</label>
+        <textarea id="f-notas" placeholder="Notas sobre la tarea… la IA las usará para ayudarte mejor."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="Dashboard.closeModal()">Cancelar</button>
+      <button class="btn btn-indigo" onclick="Dashboard.saveModal()">Guardar tarea</button>
+    </div>
+  </div>
+</div>
+
+<!-- Avatar styles (shared) -->
+<style>
+.avatar-opt {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; cursor: pointer;
+  border: 2px solid transparent; transition: all .15s;
+  background: var(--cream-dark);
+}
+.avatar-opt:hover { transform: scale(1.1); }
+.avatar-opt.selected { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(61,59,232,.2); }
+</style>
+
+<div id="toast-container" aria-live="polite"></div>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/tasks.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/dashboard.js"></script>
+
+<script>
+  // ── Bootstrap ──
+  const session = Auth.requireAuth();
+  if (session) {
+    Tasks.init(session.userId);
+
+    // Populate user info
+    document.getElementById('sb-name').textContent    = session.name;
+    document.getElementById('sb-career').textContent  = session.career || 'Estudiante';
+    document.getElementById('sb-avatar').textContent  = session.avatar || '🎓';
+    document.getElementById('greeting-name').textContent = session.name.split(' ')[0];
+
+    // Boot dashboard
+    Dashboard.renderDashboard();
+    Dashboard.updateBadges();
+    Dashboard.initAI();
+  }
+
+  // ── Filter chips ──
+  function setFilter(el) {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    Dashboard.renderTasks();
+  }
+
+  // ── Show/hide topbar controls per view ──
+  const origShow = Dashboard.showView;
+  Dashboard.showView = function(id) {
+    origShow(id);
+    const searchBar  = document.getElementById('global-search-bar');
+    const btnNew     = document.getElementById('btn-new-task');
+    const showSearch = id === 'tasks';
+    searchBar.style.display = showSearch ? '' : 'none';
+    btnNew.style.display    = showSearch ? '' : 'none';
+  };
+
+  // ── Avatar picker (profile) ──
+  function pickAvatar(el) {
+    document.querySelectorAll('#edit-avatar-row .avatar-opt').forEach(a => a.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  // ── Profile prefill on open ──
+  const origProfile = Dashboard.renderProfile;
+  Dashboard.renderProfile = function() {
+    origProfile();
+    const s = Auth.getSession();
+    if (!s) return;
+    const nameEl   = document.getElementById('edit-name');
+    const careerEl = document.getElementById('edit-career');
+    if (nameEl)   nameEl.value   = s.name || '';
+    if (careerEl) careerEl.value = s.career || '';
+    const em = s.avatar || '🎓';
+    document.querySelectorAll('#edit-avatar-row .avatar-opt').forEach(a => {
+      a.classList.toggle('selected', a.dataset.em === em);
+    });
+  };
+
+  function saveProfile() {
+    const name   = document.getElementById('edit-name')?.value.trim();
+    const career = document.getElementById('edit-career')?.value.trim();
+    const avatar = document.querySelector('#edit-avatar-row .avatar-opt.selected')?.dataset.em || '🎓';
+    if (!name) { Dashboard.toast('El nombre no puede estar vacío.', 'error'); return; }
+    // Persist to localStorage session
+    const raw = localStorage.getItem('ua_session');
+    if (raw) {
+      const s = JSON.parse(raw);
+      s.name = name; s.career = career; s.avatar = avatar;
+      localStorage.setItem('ua_session', JSON.stringify(s));
+    }
+    const rawSS = sessionStorage.getItem('ua_session');
+    if (rawSS) {
+      const s = JSON.parse(rawSS);
+      s.name = name; s.career = career; s.avatar = avatar;
+      sessionStorage.setItem('ua_session', JSON.stringify(s));
+    }
+    document.getElementById('sb-name').textContent   = name;
+    document.getElementById('sb-career').textContent = career;
+    document.getElementById('sb-avatar').textContent = avatar;
+    document.getElementById('greeting-name').textContent = name.split(' ')[0];
+    Dashboard.renderProfile();
+    Dashboard.toast('Perfil actualizado.', 'success');
+  }
+
+  // ── Keyboard shortcuts ──
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') Dashboard.closeModal();
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      Dashboard.showView('tasks');
+      Dashboard.openModal();
+    }
+  });
+</script>
+
+</body>
+</html>

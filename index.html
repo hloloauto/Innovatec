@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UA Plataforma — Iniciar sesión</title>
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/auth.css" />
+</head>
+<body>
+
+<div class="auth-page">
+
+  <!-- Left: Brand panel -->
+  <div class="auth-brand">
+    <div class="brand-logo">
+      <div class="brand-logo-mark">U</div>
+      UA Plataforma
+    </div>
+
+    <div>
+      <h1 class="brand-headline">
+        Organiza tu vida<br>académica con<br><em>inteligencia</em>
+      </h1>
+      <p class="brand-sub">
+        Gestiona tus tareas, recibe análisis inteligente y mantén el control de tu rendimiento universitario — todo en un solo lugar.
+      </p>
+      <div class="brand-stats">
+        <div>
+          <span class="brand-stat-value">&lt;2s</span>
+          <span class="brand-stat-label">Tiempo de respuesta</span>
+        </div>
+        <div>
+          <span class="brand-stat-value">100%</span>
+          <span class="brand-stat-label">Exactitud de datos</span>
+        </div>
+        <div>
+          <span class="brand-stat-value">IA</span>
+          <span class="brand-stat-label">Asistente integrado</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="brand-quotes">
+      <p class="brand-quote-text">"La organización es la base del éxito académico."</p>
+      <p class="brand-quote-author">— Principio de gestión universitaria</p>
+    </div>
+  </div>
+
+  <!-- Right: Auth forms -->
+  <div class="auth-form-panel">
+    <div class="auth-form-wrap">
+
+      <!-- LOGIN -->
+      <div id="panel-login">
+        <h2 class="auth-form-title">Bienvenido de vuelta</h2>
+        <p class="auth-form-sub">Ingresa tus credenciales para continuar.</p>
+
+        <div class="auth-error" id="login-error">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="8.5"/><circle cx="8" cy="11" r=".5" fill="currentColor"/></svg>
+          <span id="login-error-msg"></span>
+        </div>
+
+        <div class="auth-form">
+          <div class="field">
+            <label for="login-email">Correo universitario</label>
+            <input type="email" id="login-email" placeholder="tu@universidad.edu" autocomplete="email" />
+          </div>
+          <div class="field">
+            <label for="login-password">Contraseña</label>
+            <div class="password-wrap">
+              <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
+              <button type="button" class="password-toggle" onclick="togglePwd('login-password', this)" aria-label="Mostrar contraseña">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-60);cursor:pointer;">
+              <input type="checkbox" id="remember-me" style="width:auto;" /> Recordarme
+            </label>
+            <a href="#" onclick="return false;" style="font-size:13px;">¿Olvidaste tu contraseña?</a>
+          </div>
+
+          <button class="btn btn-indigo" style="width:100%;margin-top:4px;" onclick="doLogin()">
+            Iniciar sesión
+          </button>
+        </div>
+
+        <div class="auth-divider">o prueba con</div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button class="btn btn-ghost" style="width:100%;" onclick="demoLogin('javier@universidad.edu')">
+            🎓 Demo — Javier Gaitán
+          </button>
+          <button class="btn btn-ghost" style="width:100%;" onclick="demoLogin('ximena@universidad.edu')">
+            📚 Demo — Ximena García
+          </button>
+        </div>
+
+        <p class="auth-switch">¿No tienes cuenta? <a onclick="switchPanel('register')">Créala gratis</a></p>
+      </div>
+
+      <!-- REGISTER -->
+      <div id="panel-register" style="display:none;">
+        <h2 class="auth-form-title">Crea tu cuenta</h2>
+        <p class="auth-form-sub">Únete a UA Plataforma en menos de un minuto.</p>
+
+        <div class="auth-error" id="reg-error">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="8.5"/><circle cx="8" cy="11" r=".5" fill="currentColor"/></svg>
+          <span id="reg-error-msg"></span>
+        </div>
+
+        <div class="auth-form">
+          <div class="field">
+            <label>Nombre completo</label>
+            <input type="text" id="reg-name" placeholder="Tu nombre" autocomplete="name" />
+          </div>
+          <div class="field">
+            <label>Correo universitario</label>
+            <input type="email" id="reg-email" placeholder="tu@universidad.edu" autocomplete="email" />
+          </div>
+          <div class="field">
+            <label>Carrera</label>
+            <input type="text" id="reg-career" placeholder="Ej: Ingeniería de Sistemas" />
+          </div>
+          <div class="field">
+            <label>Contraseña</label>
+            <div class="password-wrap">
+              <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+              <button type="button" class="password-toggle" onclick="togglePwd('reg-password', this)" aria-label="Mostrar contraseña">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Elige tu avatar</label>
+            <div class="avatar-row" id="avatar-row">
+              <div class="avatar-opt selected" data-em="🎓" onclick="selectAvatar(this)">🎓</div>
+              <div class="avatar-opt" data-em="📚" onclick="selectAvatar(this)">📚</div>
+              <div class="avatar-opt" data-em="💻" onclick="selectAvatar(this)">💻</div>
+              <div class="avatar-opt" data-em="🔬" onclick="selectAvatar(this)">🔬</div>
+              <div class="avatar-opt" data-em="🎨" onclick="selectAvatar(this)">🎨</div>
+              <div class="avatar-opt" data-em="⚡" onclick="selectAvatar(this)">⚡</div>
+            </div>
+          </div>
+          <button class="btn btn-indigo" style="width:100%;margin-top:4px;" onclick="doRegister()">
+            Crear cuenta
+          </button>
+        </div>
+
+        <p class="auth-switch">¿Ya tienes cuenta? <a onclick="switchPanel('login')">Inicia sesión</a></p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="js/auth.js"></script>
+<script>
+  // If already logged in, redirect
+  if (Auth.getSession()) window.location.href = 'app.html';
+
+  function switchPanel(panel) {
+    document.getElementById('panel-login').style.display    = panel === 'login'    ? '' : 'none';
+    document.getElementById('panel-register').style.display = panel === 'register' ? '' : 'none';
+  }
+
+  function togglePwd(id, btn) {
+    const input = document.getElementById(id);
+    const isText = input.type === 'text';
+    input.type = isText ? 'password' : 'text';
+    btn.style.color = isText ? '' : 'var(--indigo)';
+  }
+
+  function selectAvatar(el) {
+    document.querySelectorAll('.avatar-opt').forEach(a => a.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    document.getElementById(id + '-msg').textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 4000);
+  }
+
+  function doLogin() {
+    const email    = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const remember = document.getElementById('remember-me').checked;
+    if (!email || !password) { showError('login-error', 'Completa todos los campos.'); return; }
+    const result = Auth.login(email, password, remember);
+    if (!result.ok) { showError('login-error', result.error); return; }
+    window.location.href = 'app.html';
+  }
+
+  function demoLogin(email) {
+    document.getElementById('login-email').value    = email;
+    document.getElementById('login-password').value = 'demo1234';
+    doLogin();
+  }
+
+  function doRegister() {
+    const name     = document.getElementById('reg-name').value.trim();
+    const email    = document.getElementById('reg-email').value.trim();
+    const career   = document.getElementById('reg-career').value.trim();
+    const password = document.getElementById('reg-password').value;
+    const avatar   = document.querySelector('.avatar-opt.selected')?.dataset.em || '🎓';
+    if (!name || !email || !password) { showError('reg-error', 'Completa todos los campos obligatorios.'); return; }
+    const result = Auth.register({ name, email, career, password, avatar });
+    if (!result.ok) { showError('reg-error', result.error); return; }
+    window.location.href = 'app.html';
+  }
+
+  // Enter key support
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (document.getElementById('panel-login').style.display !== 'none') doLogin();
+      else doRegister();
+    }
+  });
+</script>
+</body>
+</html>
