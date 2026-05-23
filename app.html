@@ -688,6 +688,7 @@
   const session = Auth.requireAuth();
   if (session) {
     Tasks.init(session.userId);
+    Tasks.maybeSeed();
 
     // Populate user info
     document.getElementById('sb-name').textContent    = session.name;

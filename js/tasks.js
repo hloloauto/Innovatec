@@ -1,72 +1,108 @@
-/* ── UA Plataforma · tasks.js ── */
+/* ── UA Plataforma · tasks.js — Google Sheets backend ── */
 
 const Tasks = (() => {
 
-  let userId = null;
+  const API = 'https://script.google.com/a/macros/autonoma.edu.pe/s/AKfycbzGn-IXe1til7ygl8yj0ATxwf-ft7523QJsB7d2o5tCA80oPPecSES5t7OCF0BXpF_S8w/exec';
 
-  function key() { return `ua_tasks_${userId}`; }
+  let userId = null;
+  let _cache = null; // memoria local para velocidad
 
   function init(uid) {
     userId = uid;
-    if (!localStorage.getItem(key())) {
-      const today = new Date();
-      const fmt = d => d.toISOString().slice(0, 10);
-      const add = (n, days) => { const d = new Date(today); d.setDate(d.getDate() + days); return fmt(d); };
+    _cache = null;
+  }
 
-      const seed = [
-        { id:'t1', nombre:'Entregar Informe Innova Tec', curso:'Innovación Tecnológica', fecha: add(today, 0),  estado:'Pendiente',    prioridad:'Alta',   notas:'Análisis de plataformas low-code. Incluir Glide, Google Sheets y comparativa.' },
-        { id:'t2', nombre:'Revisión de lecturas IA',      curso:'Inteligencia Artificial', fecha: add(today,-1), estado:'Completado',   prioridad:'Media',  notas:'Capítulos 3 y 4 de Russell. Búsqueda heurística y lógica proposicional.' },
-        { id:'t3', nombre:'Proyecto Mejora Ágil Cafetalero', curso:'Gestión de Proyectos', fecha: add(today, 5), estado:'En progreso', prioridad:'Alta',   notas:'Sprint 2: validar flujo de registro de lotes. Reunión viernes con equipo.' },
-        { id:'t4', nombre:'Parcial de Estadística',       curso:'Estadística Aplicada', fecha: add(today,-3),   estado:'Vencido',     prioridad:'Crítica', notas:'Distribuciones, intervalos de confianza, regresión lineal.' },
-        { id:'t5', nombre:'Presentación de Bases de Datos', curso:'Bases de Datos',    fecha: add(today, 7),   estado:'Pendiente',   prioridad:'Media',  notas:'Modelo ER del sistema de biblioteca. Usar Draw.io.' },
-        { id:'t6', nombre:'Taller de Algoritmos',          curso:'Estructuras de Datos', fecha: add(today, 2), estado:'En progreso', prioridad:'Media',  notas:'Implementar árbol AVL en Python. Subir al repositorio antes del viernes.' },
-      ];
-      localStorage.setItem(key(), JSON.stringify(seed));
+  /* ── Helpers de red ── */
+  async function get(params) {
+    const url = API + '?' + new URLSearchParams({ ...params, userId });
+    const res = await fetch(url);
+    return res.json();
+  }
+
+  async function post(body) {
+    const res = await fetch(API, {
+      method: 'POST',
+      body: JSON.stringify({ ...body, userId }),
+    });
+    return res.json();
+  }
+
+  /* ── Seed de tareas de ejemplo (solo primera vez) ── */
+  async function maybeSeed() {
+    const flagKey = `ua_seeded_${userId}`;
+    if (localStorage.getItem(flagKey)) return;
+    const today = new Date();
+    const fmt = d => d.toISOString().slice(0, 10);
+    const add = days => { const d = new Date(today); d.setDate(d.getDate() + days); return fmt(d); };
+
+    const seed = [
+      { nombre:'Entregar Informe Innova Tec',      curso:'Innovación Tecnológica', fecha:add(0),  estado:'Pendiente',   prioridad:'Alta',   notas:'Análisis de plataformas low-code. Incluir Glide, Google Sheets y comparativa.' },
+      { nombre:'Revisión de lecturas IA',           curso:'Inteligencia Artificial', fecha:add(-1), estado:'Completado', prioridad:'Media',  notas:'Capítulos 3 y 4 de Russell. Búsqueda heurística y lógica proposicional.' },
+      { nombre:'Proyecto Mejora Ágil Cafetalero',  curso:'Gestión de Proyectos',   fecha:add(5),  estado:'En progreso', prioridad:'Alta',   notas:'Sprint 2: validar flujo de registro de lotes.' },
+      { nombre:'Parcial de Estadística',            curso:'Estadística Aplicada',   fecha:add(-3), estado:'Vencido',     prioridad:'Crítica',notas:'Distribuciones, intervalos de confianza, regresión lineal.' },
+      { nombre:'Presentación de Bases de Datos',   curso:'Bases de Datos',         fecha:add(7),  estado:'Pendiente',   prioridad:'Media',  notas:'Modelo ER del sistema de biblioteca. Usar Draw.io.' },
+      { nombre:'Taller de Algoritmos',              curso:'Estructuras de Datos',   fecha:add(2),  estado:'En progreso', prioridad:'Media',  notas:'Implementar árbol AVL en Python.' },
+    ];
+
+    for (const t of seed) {
+      t.id = 't' + Date.now() + Math.random().toString(36).slice(2, 6);
+      t.createdAt = new Date().toISOString();
+      await post({ action: 'saveTask', task: t });
     }
+    localStorage.setItem(flagKey, '1');
   }
 
-  function getAll() {
-    return JSON.parse(localStorage.getItem(key()) || '[]');
+  /* ── API pública ── */
+
+  async function getAll() {
+    if (_cache) return _cache;
+    try {
+      const data = await get({ action: 'getTasks' });
+      _cache = Array.isArray(data) ? data : [];
+    } catch(e) {
+      console.error('Sheets error:', e);
+      _cache = [];
+    }
+    return _cache;
   }
 
-  function save(tasks) {
-    localStorage.setItem(key(), JSON.stringify(tasks));
-  }
-
-  function add(data) {
-    const tasks = getAll();
-    const task = { id: 't' + Date.now(), ...data, createdAt: new Date().toISOString() };
-    tasks.push(task);
-    save(tasks);
+  async function add(data) {
+    const task = {
+      id: 't' + Date.now(),
+      ...data,
+      createdAt: new Date().toISOString(),
+    };
+    await post({ action: 'saveTask', task });
+    _cache = null; // invalidar cache
     return task;
   }
 
-  function update(id, data) {
-    const tasks = getAll();
-    const i = tasks.findIndex(t => t.id === id);
-    if (i === -1) return null;
-    tasks[i] = { ...tasks[i], ...data, updatedAt: new Date().toISOString() };
-    save(tasks);
-    return tasks[i];
+  async function update(id, data) {
+    const tasks = await getAll();
+    const existing = tasks.find(t => t.id === id);
+    if (!existing) return null;
+    const updated = { ...existing, ...data, updatedAt: new Date().toISOString() };
+    await post({ action: 'updateTask', task: updated });
+    _cache = null;
+    return updated;
   }
 
-  function remove(id) {
-    const tasks = getAll();
-    save(tasks.filter(t => t.id !== id));
+  async function remove(id) {
+    await post({ action: 'deleteTask', id });
+    _cache = null;
   }
 
-  function toggleDone(id) {
-    const tasks = getAll();
+  async function toggleDone(id) {
+    const tasks = await getAll();
     const t = tasks.find(t => t.id === id);
     if (!t) return;
-    t.estado = t.estado === 'Completado' ? 'Pendiente' : 'Completado';
-    t.updatedAt = new Date().toISOString();
-    save(tasks);
-    return t;
+    const newEstado = t.estado === 'Completado' ? 'Pendiente' : 'Completado';
+    await update(id, { estado: newEstado });
+    return { ...t, estado: newEstado };
   }
 
-  function getStats() {
-    const tasks = getAll();
+  async function getStats() {
+    const tasks = await getAll();
     const today = new Date().toISOString().slice(0, 10);
     const total      = tasks.length;
     const completado = tasks.filter(t => t.estado === 'Completado').length;
@@ -78,16 +114,17 @@ const Tasks = (() => {
     return { total, completado, pendiente, progreso, vencido, pct, cursos };
   }
 
-  function getUpcoming(limit = 5) {
+  async function getUpcoming(limit = 5) {
+    const tasks = await getAll();
     const today = new Date().toISOString().slice(0, 10);
-    return getAll()
+    return tasks
       .filter(t => t.estado !== 'Completado')
       .sort((a, b) => a.fecha.localeCompare(b.fecha))
       .slice(0, limit);
   }
 
-  function getCourseBreakdown() {
-    const tasks = getAll();
+  async function getCourseBreakdown() {
+    const tasks = await getAll();
     const cursos = [...new Set(tasks.map(t => t.curso))];
     return cursos.map(c => ({
       curso: c,
@@ -96,5 +133,5 @@ const Tasks = (() => {
     }));
   }
 
-  return { init, getAll, add, update, remove, toggleDone, getStats, getUpcoming, getCourseBreakdown };
+  return { init, maybeSeed, getAll, add, update, remove, toggleDone, getStats, getUpcoming, getCourseBreakdown };
 })();
